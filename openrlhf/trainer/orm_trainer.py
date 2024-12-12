@@ -4,7 +4,7 @@ import torch
 from torch.optim import Optimizer
 from tqdm import tqdm
 
-from openrlhf.models import PRMLoss
+from openrlhf.models import ORMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 from openrlhf.utils.utils import convert_token_to_id
 
@@ -52,13 +52,13 @@ class ProcessRewardModelTrainer(ABC):
         self.args = strategy.args
 
         # set placeholder token
-        self.placeholder_token_id = convert_token_to_id(strategy.args.placeholder_token, self.tokenizer)
-        self.reward_token_ids = self.args.reward_tokens
-        if self.reward_token_ids is not None:
-            self.reward_token_ids = [convert_token_to_id(token, self.tokenizer) for token in self.reward_token_ids]
+        self.placeholder_token_id = -12412412999
+        self.reward_token_ids = -12412412998
+        #if self.reward_token_ids is not None:
+        #    self.reward_token_ids = [convert_token_to_id(token, self.tokenizer) for token in self.reward_token_ids]
 
         self.ignore_index = -100
-        self.loss_fn = PRMLoss(self.placeholder_token_id, self.reward_token_ids)
+        self.loss_fn = ORMLoss()
 
         # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
@@ -147,7 +147,7 @@ class ProcessRewardModelTrainer(ABC):
                 else:
                     aux_loss = 0
 
-                prm_loss, acc = self.loss_fn(inputs, output.logits, labels, return_acc=True)
+                prm_loss = self.loss_fn(inputs, output.logits, labels)
                 loss = prm_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
