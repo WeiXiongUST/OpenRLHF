@@ -256,6 +256,19 @@ class KDLoss(nn.Module):
         return distil_loss
 
 
+class ORMLoss(nn.Module):
+    """
+     Loss for ORM
+    """
+
+    def forward(self, inputs: torch.Tensor, logits: torch.Tensor, labels: torch.Tensor):
+        label = torch.tensor(label,dtype=torch.bfloat16).to(logits.device)
+        probs = torch.sigmoid(logits)
+        loss = label * torch.log(probs+1e-10) + (1 - label) * torch.log(1 - probs+1e-10)
+        final_loss = -torch.mean(loss)
+        return final_loss.mean()
+        
+
 class PRMLoss(nn.Module):
     """
     Process Reward Model Loss
